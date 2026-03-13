@@ -1,0 +1,356 @@
+---
+title: "PQS FINDER alghoritm"
+output: html_notebook
+---
+
+This is customized R script file for using PQS finder package.
+
+Written with the instruct of [pqsfinder : User Guide](https://bioconductor.org/packages/release/bioc/vignettes/pqsfinder/inst/doc/pqsfinder.html)
+
+####### Install the library
+
+```{r}
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install("pqsfinder", ask = FALSE)
+BiocManager::install("Gviz", ask = FALSE)
+if (!"BSgenome.Hsapiens.UCSC.hg38" %in% installed.packages()) {
+        options(timeout = 600)
+        BiocManager::install("BSgenome.Hsapiens.UCSC.hg38", ask = FALSE)
+} else {message("Done")
+    }
+```
+
+\~To download package in console
+
+```{r}
+library(pqsfinder)
+library(Biostrings)
+library(Gviz)
+library(BSgenome.Hsapiens.UCSC.hg38)
+library(ggplot2)
+library(rtracklayer)
+library(grDevices)
+library(biomaRt)
+library(stringr)
+```
+
+\~import libraries
+
+### Get referance genome
+
+This program is using for get the reference genome by with [e0zturk/dna_extractor](https://github.com/e0zturk/dna_extractor)
+
+The repository is a program that outputs a specific gene region sequence for G4-quadruplex scanning. It runs in the Conda environment. We plan to integrate the outputs provided by this repository into the PQS Finder algorithm.
+
+```{r}
+fasta_files <- list.files(path = "data", pattern = "\\.fasta|fa?$", full.names = TRUE)
+if (length(fasta_files) == 0){
+  stop("Processing was stopped, please check in data directory")
+}
+referance_path <- fasta_files[1]
+```
+
+\~select your '.fasta' file
+
+```{r}
+dna_set <- readDNAStringSet(referance_path, format = "fasta")
+seq <- DNAString(as.character(dna_set[[1]]))
+
+```
+
+\~Define the reference genome
+
+### Run pqsfinder
+
+Identify PQS in the extracted DNA sequence by running the 'pqsfinder' function. The resulting frame, pqs_rs, contains information about each predicted G‑quadruplex.The parameter set reflects a balance between sensitivity and specificity for intramolecular G4 detection.  min_score = 52L is empirically optimized for high accuracy on experimental G4-seq data (Chambers et al., 2015). run_min_len = 2L  and  run_max_len = 11L  allow biologically plausible G- tracts, while  loop_max_len = 30L  accommodates most natural loop configurations.  deep = TRUE  ensures comprehensive scoring ( maxScores , density ) critical for downstream visualization and statistical filtering.
+
+```{r}
+pqs_rs <- pqsfinder(subject = seq,
+                    strand = "*",
+                    overlapping = FALSE,
+                    min_score = 52L,
+                    max_len = 50L,
+                    run_min_len = 2L,
+                    run_max_len = 11L,
+                    loop_min_len = 0L,
+                    loop_max_len = 30L,
+                    deep = TRUE,
+                    verbose = FALSE)
+pqs_rs
+```
+
+\~Define pqsfinder and you can follow results in output 
+
+### Visualization
+
+Data frame was saved successfully. Now you can visualize according to position. You can plot all G4‑quadruplex structures obtained from scanning the entire gene region covered by the provided 'fasta' file.
+
+```{r}
+scores    <- score(pqs_rs)
+threshold <- mean(scores) + 2 * sd(scores)
+
+colors <- ifelse(scores >= threshold, "red", "black")
+pchs   <- ifelse(scores >= threshold, 19, 1)
+
+max_score_index    <- which.max(scores)
+max_score_value    <- max(scores)
+max_score_position <- start(pqs_rs)[max_score_index]
+
+
+plot(start(pqs_rs), scores,
+      col = colors,
+      pch = pchs,
+      xlab = "Position",
+      ylab = "Score",
+      main = "PQS Scores Across Genome")
+
+
+abline(h = threshold, col = "#ee4000", lty = 2, lwd = 1.5)
+
+
+text(max(start(pqs_rs)) * 0.02, threshold + 2,
+      paste0("threshold = ", round(threshold, 1), " (mean+2sd)"),
+      col = "#ee4000", adj = 0, cex = 0.8)
+
+
+points(max_score_position, max_score_value,
+        col = "#b22222", pch = 19, cex = 1.2)
+
+y_offset <- 0.05 * diff(range(scores))
+
+text(x = max_score_position,
+      y = max_score_value - y_offset,
+      labels = paste("Max Score:", round(max_score_value, 2)),
+      col = "#b22222",
+      cex = 0.6,
+      pos = 4)
+```
+
+\~Plot PQS scores across the genome. The plot visually highlights the calculated threshold values, marking them in red to facilitate rapid identification of statistically significant PQS scores
+
+
+
+Alternatively 'Gviz' Usage
+
+Gviz provides a powerful and flexible framework for visualizing genomic data, enabling interactive exploration of G4-quadruplex structures within their genomic context. This allows for a deeper understanding of the location and potential biological significance of predicted PQS motifs. The density value indicates the quality of the pqs values, with better results in denser areas.
+
+
+First you should reach header info into your_seq.fasta file, header include genomic coordinate info from reference genome. Let's read it
+
+```{r}
+header <- ""
+
+for (line in readLines(referance_path)) {
+  if (startsWith(line, ">")) {
+    transkript <- gsub(".*\\[(.*?)\\].*", "\\1", line)
+    transkript_clean <- sub("\\.\\d+$", "", transkript)
+    parts <- strsplit(line, ":")[[1]]
+    name <- parts[1]
+    splitte <- unlist(strsplit(name, "\\|"))
+    chr <- as.numeric(tail(splitte, n = 1))
+    split1 <- unlist(strsplit(parts[2], "-"))
+    seq_start <- as.numeric(split1[1])
+    seq_end <- as.numeric(strsplit(split1[2], "\\|")[[1]][1])
+    break
+  }
+}
+
+ensembl <- useEnsembl(
+  biomart = "ensembl",
+  dataset = "hsapiens_gene_ensembl",
+  mirror = "useast"
+)
+
+options(timeout = 600)
+gnm <- "hg38"
+bm_data <- getBM(
+attributes = c("transcript_start", "transcript_end", 
+               "strand","hgnc_symbol","ensembl_transcript_id",
+               "transcript_is_canonical"),
+  
+filters = "ensembl_transcript_id",
+values = transkript_clean,
+mart = ensembl
+)
+if (bm_data$transcript_is_canonical == TRUE)
+{
+  canonical_key <- "canonical"
+}else{
+  canonical_key <- "non-canonical"
+}
+
+ttrack <- AnnotationTrack(
+  start = bm_data$transcript_start[1],
+  end = bm_data$transcript_end[1],
+  chromosome = chr,
+  genome = "hg38",
+  name = bm_data$hgnc_symbol,
+  fontcolor.title = "#776b00", cex.title = 0.6,
+  feature = "transcript",
+  shape = "arrow",
+  fill = "azure3",
+  border = "gold4",
+  col = "gold4",
+  strand = bm_data$strand[1],
+  id = paste0(bm_data$ensembl_transcript_id, " : ", canonical_key, " transcript"),
+  showFeatureId = TRUE,
+  fontcolor.feature = "darkblue",
+  cex.feature = 0.6,
+  lwd = 3
+)
+    
+densi <- coverage(IRanges(start(pqs_rs), end(pqs_rs)))
+extend <- as.numeric(length(seq)/20)
+strack <- DataTrack(
+  start = start(pqs_rs)+seq_start, end = end(pqs_rs)+seq_start,
+  data = score(pqs_rs), chromosome = chr, genome = gnm, name = "G4-score",
+  fontcolor.title = "midnightblue", cex.title = 0.9, col = "slategray", lwd = 3,
+  type = "p")
+
+dtrack <- DataTrack(
+  start = seq_start:(seq_start + length(densi) - 1), width = 1,
+  data = as.numeric(densi), chromosome = chr, genome = gnm,
+  name = "density", fontcolor.title = "darkolivegreen", cex.title = 0.9,
+  col ="lightyellow4", lwd = 1, type = "l")
+
+atrack <- GenomeAxisTrack(chromosome=chr, genome = gnm, name = paste0("Chr", chr),
+                          showTitle = TRUE, cex.title = 1.0, fontcolor.title = "#050505",
+                          rotation.title = 0, background.title = "lightgray")
+
+
+
+line1 <- paste0("*G4 prediction in ", bm_data$hgnc_symbol, 
+                " (", ifelse(bm_data$strand[1] == -1, "reverse", "forward"), " strand)")
+line2 <- "G4 motifs by pqsfinder | Arrow: strand orientation | Density: structural confidence"
+explaincom <- paste0(line1, " | ", line2)
+
+grid::grid.newpage()
+grid::pushViewport(grid::viewport(y = 1, just = "top",
+  height = grid::unit(1, "npc") - grid::unit(1, "lines")))
+
+suppressWarnings(plotTracks(c(ttrack, strack, dtrack, atrack), type = "h",
+                            from = seq_start - extend, to = seq_end + extend, 
+                            sizes = c(0.4, 1.8, 1.3, 0.4), title.width = 2.0, add = TRUE))
+grid::popViewport()
+
+grid::grid.text(label = explaincom, 
+                x = grid::unit(0.05, "npc"), y = grid::unit(1.2, "lines"), just = "left",
+                gp = grid::gpar(col = "slategray", fontsize = 9, fontface = "italic"))
+```
+\~In Gviz visualisation, AnnotationTrack represents the genetic element, DataTrack represents the scores and density, and GenomeAxisTrack represents the coordinate axis. The shape = "arrow" parameter indicates the strand orientation of the transcript, marking the (+) or (–) direction with an arrow.
+
+
+### Exportation
+
+You can export the obtained G-4 quadruplex structures in a suitable format for easy use in your subsequent analyses or visualization processes.
+
+```{r}
+
+png(filename = "results/pqs_scores.png", width = 800, height = 600,
+    units = "px", res = 100)
+
+
+scores    <- score(pqs_rs)
+threshold <- mean(scores) + 2 * sd(scores)
+
+colors <- ifelse(scores >= threshold, "red", "black")
+pchs   <- ifelse(scores >= threshold, 19, 1)
+
+max_score_index    <- which.max(scores)
+max_score_value    <- max(scores)
+max_score_position <- start(pqs_rs)[max_score_index]
+
+
+plot(start(pqs_rs), scores,
+     col = colors,
+     pch = pchs,
+     xlab = "Position",
+     ylab = "Score",
+     main = "PQS Scores Across Entire Sequence")
+
+
+abline(h = threshold, col = "#ee4000", lty = 2, lwd = 1.5)
+
+
+text(max(start(pqs_rs)) * 0.02, threshold + 2,
+     paste0("threshold = ", round(threshold, 1), " (mean+2sd)"),
+     col = "#ee4000", adj = 0, cex = 0.8)
+
+
+points(max_score_position, max_score_value,
+       col = "#b22222", pch = 19, cex = 1.2)
+
+y_offset <- 0.05 * diff(range(scores))
+
+text(x = max_score_position,
+    y = max_score_value - y_offset,
+    labels = paste("Max Score:", round(max_score_value, 2)),
+    col = "#b22222",
+    cex = 0.6,
+    pos = 4)
+
+invisible(dev.off())
+
+message("All sequence PQS scores have been saved as 'results/pqs_scores.png'.")
+```
+\~Export pqs scores graph
+
+
+```{r}
+gvis_fname <- sprintf("results/Gviz_track(chr%s;%d-%d).png",
+                      chr, floor(seq_start - extend), floor(seq_end + extend))
+    
+png(filename = gvis_fname, width = 800, height = 600,
+    units = "px", res = 100)
+
+line1 <- paste0("*G4 prediction in ", bm_data$hgnc_symbol, 
+                " (", ifelse(bm_data$strand[1] == -1, "reverse", "forward"), " strand)")
+line2 <- "G4 motifs by pqsfinder | Arrow: strand orientation | Density: structural confidence"
+explaincom <- paste0(line1, " | ", line2)
+
+grid::grid.newpage()
+grid::pushViewport(grid::viewport(y = 1, just = "top",
+  height = grid::unit(1, "npc") - grid::unit(1, "lines")))
+
+suppressWarnings(plotTracks(c(ttrack, strack, dtrack, atrack), type = "h",
+                            from = seq_start - extend, to = seq_end + extend, 
+                            sizes = c(0.4, 1.8, 1.3, 0.4), title.width = 2.0, add = TRUE))
+grid::popViewport()
+
+grid::grid.text(label = explaincom, 
+                x = grid::unit(0.05, "npc"), y = grid::unit(1.2, "lines"), just = "left",
+                gp = grid::gpar(col = "slategray", fontsize = 9, fontface = "italic"))
+
+invisible(dev.off())
+msgtext <- paste0("All sequence PQS scores have been saved as '", gvis_fname,"'")
+message(msgtext)
+```
+\~Export Gviz genome track (Before try, please run chunk 7)
+
+
+You can export the test results to a file in CSV format using a dataframe element. Additionally It will save as fasta files.
+
+    Fasta file format:
+    >pqsfinder;G_quartet;start=778;end=806;strand=+;score=85;nt=4;nb=1;nm=0;rl1=4;rl2=4;rl3=4;ll1=
+    ;ll2=6;ll3=1;GGGGAGGGGGAGCAAGGGGTGTAAGAGGG
+    >pqsfinder;G_quartet;start=1071;end=1109;strand=-;score=71;nt=5;nb=2;nm=1;rl1=5;rl2=8;rl3=5;ll
+    =6;ll2=4;ll3=1;CCCCCTCTAGTCCCAAACCTAAGCCCACACTCTGTCCCC
+
+```{r}
+
+writeXStringSet(as(pqs_rs, "DNAStringSet"), file = "results/test_result.fa", format = "fasta")
+fasta_path <- "results/test_result.fa"
+dna_strings <- readDNAStringSet(fasta_path, format = "fasta")
+dfasta <- data.frame(seq = dna_strings, stringsAsFactors = FALSE)
+
+pqs_rso <- pqs_rs[order(score(pqs_rs), decreasing = TRUE)]
+pqs_df <- data.frame(start = start(pqs_rso),width = width(pqs_rso),
+                     score = score(pqs_rso), strand = strand(pqs_rso),
+                     n_g_rich = mcols(pqs_rso)$nt, n_bulge = mcols(pqs_rso)$nb,
+                     n_mismatch = mcols(pqs_rso)$nm, sequence = dfasta$seq)
+csv_path <- file.path("results", "pqs_results.csv")
+write.table(pqs_df, file = csv_path, col.names = TRUE, quote = FALSE)
+
+```
+\~Recorded pqs_rs as CSV format, and all detected G4 sequence recorded a fasta file.

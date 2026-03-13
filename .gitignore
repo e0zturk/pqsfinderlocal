@@ -47,3 +47,10 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+# special this project
+
+data/*.fasta
+data/*.fa
+results/
+pqsfinderlocal.nb.html
