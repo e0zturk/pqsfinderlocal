@@ -50,5 +50,6 @@ rsconnect/
 
 # special this project
 
-renv/
+renv/library/
+renv/staging/
 pqsfinderlocal.nb.html
