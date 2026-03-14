@@ -8,11 +8,8 @@ This is customized R script file for using PQS finder package.
 Written with the instruct of [pqsfinder : User Guide](https://bioconductor.org/packages/release/bioc/vignettes/pqsfinder/inst/doc/pqsfinder.html)
 
 ####### Install the library
-> If you are running this notebook **locally**, remove the `#` from `{#r}` to enable the chunk, then run it once to install all required packages.
- 
-> If you are running via **Binder**, do not enable this chunk. All dependencies are pre-installed automatically through `install.R`.
 
-```{#r}
+```{r}
 if (!require("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
 BiocManager::install("pqsfinder", ask = FALSE)
