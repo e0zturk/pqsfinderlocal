@@ -7,18 +7,18 @@ This is customized R script file for using PQS finder package.
 
 Written with the instruct of [pqsfinder : User Guide](https://bioconductor.org/packages/release/bioc/vignettes/pqsfinder/inst/doc/pqsfinder.html)
 
-####### Install the library
+####### Install the library 
+> Important notice
 
-```{r}
-if (!require("BiocManager", quietly = TRUE))
-    install.packages("BiocManager")
-BiocManager::install("pqsfinder", ask = FALSE)
-BiocManager::install("Gviz", ask = FALSE)
-if (!"BSgenome.Hsapiens.UCSC.hg38" %in% installed.packages()) {
-        options(timeout = 600)
-        BiocManager::install("BSgenome.Hsapiens.UCSC.hg38", ask = FALSE)
-} else {message("Done")
-    }
+* If you are running this notebook **locally**, remove the `#` from `{#r}` to
+enable the chunk, then run it once to install all required packages.
+
+* If you are running via **Binder**, do not enable this chunk. All dependencies are pre-installed automatically through `install.R`.
+
+The installation process may take approximately 15-20 minutes for first time installation.
+
+```{#r}
+restore::venv(prompt = FALSE
 ```
 
 \~To download package in console
