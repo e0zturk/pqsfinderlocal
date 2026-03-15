@@ -1,7 +1,11 @@
-options(renv.consent = TRUE)
 
 if (!requireNamespace("renv", quietly = TRUE)) {
   install.packages("renv")
 }
+
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+options(renv.consent = TRUE)
 
 renv::restore(prompt = FALSE)

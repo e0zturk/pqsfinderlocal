@@ -1,0 +1,10 @@
+build-essential
+libbz2-dev
+liblzma-dev
+libpng-dev
+libxml2-dev
+libssl-dev
+xz-utils
+zlib1g-dev
+libcurl4-openssl-dev
+pandoc

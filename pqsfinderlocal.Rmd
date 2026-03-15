@@ -18,7 +18,10 @@ enable the chunk, then run it once to install all required packages.
 The installation process may take approximately 15-20 minutes for first time installation.
 
 ```{#r}
-restore::venv(prompt = FALSE
+if (!requireNamespace("renv", quietly = TRUE)) {
+  install.packages("renv")
+}
+restore::venv(prompt = FALSE)
 ```
 
 \~To download package in console
