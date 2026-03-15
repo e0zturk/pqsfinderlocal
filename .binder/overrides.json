@@ -1,0 +1,11 @@
+{
+  "buildpacks": [
+    {
+      "url": "https://github.com/rocker-org/binder",
+      "ref": "4.5"
+    }
+  ],
+  "build": {
+    "memory_limit": "4G"
+  }
+}
