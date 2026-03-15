@@ -8,10 +8,7 @@ if (!require("BiocManager", quietly = TRUE))
 
 options(renv.consent = TRUE)
 
-renv::restore(prompt = FALSE)
+renv::restore(prompt = FALSE, exclude = c("Gviz", "BSgenome.Hsapiens.UCSC.hg38"))
 
 BiocManager::install("Gviz", ask = FALSE)
-if (!"BSgenome.Hsapiens.UCSC.hg38" %in% installed.packages()) {
-        options(timeout = 600)
-        BiocManager::install("BSgenome.Hsapiens.UCSC.hg38", ask = FALSE)
-} else {message("BSgenome has been downloaded.")
+BiocManager::install("BSgenome.Hsapiens.UCSC.hg38", ask = FALSE)
