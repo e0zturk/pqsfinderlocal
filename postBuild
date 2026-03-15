@@ -1,32 +1,36 @@
+cat > postBuild << 'SCRIPT'
 #!/bin/bash
 
 echo "===== postBuild Script Starting ====="
-echo "Current working directory: $(pwd)"
-echo "Current user: $(whoami)"
-echo ""
 
-echo "Creating ~/.R directory..."
 mkdir -p ~/.R
 
-echo "Creating ~/.R/Renviron with 4GB memory config..."
+# 1. Renviron dosyası (environment variables)
 cat > ~/.R/Renviron << 'EOF'
 R_MAX_MEM_SIZE=4G
 JAVA_OPTS=-Xmx3g
 R_TIMEOUT=900
 EOF
 
-echo "Creating ~/.Rprofile..."
+# 2. Rprofile dosyası (R options + Renviron load)
 cat > ~/.Rprofile << 'EOF'
+# Load environment variables from ~/.R/Renviron
+if (file.exists(path.expand("~/.R/Renviron"))) {
+  readRenviron(path.expand("~/.R/Renviron"))
+}
+
+# Set R options
 options(
   java.parameters = "-Xmx3g",
   timeout = 900,
   pkgType = "binary",
   renv.consent = TRUE
 )
+
+message("\n✅ R Session Initialized with 4GB Memory Configuration\n")
 EOF
 
-echo ""
-echo "===== postBuild Script Complete ====="
-echo "Files created:"
-ls -la ~/.R/
-echo ""
+echo "✅ postBuild Script Complete"
+SCRIPT
+
+chmod +x postBuild
