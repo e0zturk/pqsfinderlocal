@@ -5,19 +5,14 @@ echo "===== postBuild Script Starting ====="
 
 mkdir -p ~/.R
 
-# 1. Renviron dosyası (environment variables)
-cat > ~/.R/Renviron << 'EOF'
-R_MAX_MEM_SIZE=4G
-JAVA_OPTS=-Xmx3g
-R_TIMEOUT=900
-EOF
-
-# 2. Rprofile dosyası (R options + Renviron load)
+# ~/.Rprofile'ında Sys.setenv() ile set et
 cat > ~/.Rprofile << 'EOF'
-# Load environment variables from ~/.R/Renviron
-if (file.exists(path.expand("~/.R/Renviron"))) {
-  readRenviron(path.expand("~/.R/Renviron"))
-}
+# Set environment variables at R session level
+Sys.setenv(
+  R_MAX_MEM_SIZE = "4G",
+  JAVA_OPTS = "-Xmx3g",
+  R_TIMEOUT = "900"
+)
 
 # Set R options
 options(
@@ -27,7 +22,7 @@ options(
   renv.consent = TRUE
 )
 
-message("\n✅ R Session Initialized with 4GB Memory Configuration\n")
+message("\n✅ R Session Initialized: Memory=4G, Timeout=900s\n")
 EOF
 
 echo "✅ postBuild Script Complete"
