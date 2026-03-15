@@ -8,4 +8,4 @@ if (!require("BiocManager", quietly = TRUE))
 
 options(renv.consent = TRUE)
 
-renv::restore(prompt = FALSE)
+renv::restore(prompt = FALSE, exclude = c("Gviz", "BSgenome.Hsapiens.UCSC.hg38"))
