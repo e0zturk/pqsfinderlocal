@@ -85,6 +85,13 @@ pqs_rs <- pqsfinder(subject = seq,
                     deep = TRUE,
                     verbose = FALSE)
 pqs_rs
+scores <- as.numeric(score(pqs_rs))
+positions <- as.integer(start(pqs_rs))
+widths <- as.integer(width(pqs_rs))
+strands <- as.character(strand(pqs_rs))
+n_g_rich <- as.integer(mcols(pqs_rs)$nt)
+n_bulge <- as.integer(mcols(pqs_rs)$nb)
+n_mismatch <- as.integer(mcols(pqs_rs)$nm)
 ```
 
 \~Define pqsfinder and you can follow results in output 
