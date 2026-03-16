@@ -1,8 +1,0 @@
-#!/bin/bash
-
-mkdir -p ~/.jupyter
-
-cat > ~/.jupyter/jupyter_notebook_config.py << 'EOF'
-c.NotebookApp.shutdown_no_activity_timeout = 1800
-c.NotebookApp.idle_kernel_timeout = 3600
-EOF
