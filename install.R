@@ -11,4 +11,3 @@ options(renv.consent = TRUE)
 renv::restore(prompt = FALSE)
 
 BiocManager::install("Gviz", ask = FALSE, force = TRUE)
-BiocManager::install("BSgenome.Hsapiens.UCSC.hg38", ask = FALSE, force = TRUE)

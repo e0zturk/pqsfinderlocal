@@ -27,7 +27,6 @@ renv::restore(prompt = FALSE)
 library(pqsfinder)
 library(Biostrings)
 library(Gviz)
-library(BSgenome.Hsapiens.UCSC.hg38)
 library(ggplot2)
 library(rtracklayer)
 library(grDevices)
@@ -45,28 +44,22 @@ This program is using for get the reference genome by with [e0zturk/dna_extracto
 The repository is a program that outputs a specific gene region sequence for G4-quadruplex scanning. It runs in the Conda environment. We plan to integrate the outputs provided by this repository into the PQS Finder algorithm.
 
 ```{r}
-library(stringr)
+invisible(library(stringr))
 
 fasta_files <- list.files(path = "data", pattern = "\\.fasta|fa?$", full.names = TRUE)
 if (length(fasta_files) == 0){
   stop("Processing was stopped, please check in data directory")
 }
 referance_path <- fasta_files[1]
-
-detach("package:stringr", unload=TRUE)
-gc()
 ```
 
 \~select your '.fasta' file
 
 ```{r}
-library(Biostrings)
+invisible(library(Biostrings))
 
 dna_set <- readDNAStringSet(referance_path, format = "fasta")
 seq <- DNAString(as.character(dna_set[[1]]))
-
-detach("package:Biostrings", unload=TRUE)
-gc()
 ```
 
 \~Define the reference genome
@@ -76,9 +69,9 @@ gc()
 Identify PQS in the extracted DNA sequence by running the 'pqsfinder' function. The resulting frame, pqs_rs, contains information about each predicted G‑quadruplex.The parameter set reflects a balance between sensitivity and specificity for intramolecular G4 detection.  min_score = 52L is empirically optimized for high accuracy on experimental G4-seq data (Chambers et al., 2015). run_min_len = 2L  and  run_max_len = 11L  allow biologically plausible G- tracts, while  loop_max_len = 30L  accommodates most natural loop configurations.  deep = TRUE  ensures comprehensive scoring ( maxScores , density ) critical for downstream visualization and statistical filtering.
 
 ```{r}
-library(pqsfinder)
-library(Biostrings)
-library(IRanges)
+invisible(library(pqsfinder))
+invisible(library(Biostrings))
+invisible(library(IRanges))
 
 pqs_rs <- pqsfinder(subject = seq,
                     strand = "*",
@@ -92,19 +85,6 @@ pqs_rs <- pqsfinder(subject = seq,
                     deep = TRUE,
                     verbose = FALSE)
 pqs_rs
-
-scores <- score(pqs_rs)
-positions <- start(pqs_rs)
-widths <- width(pqs_rs)
-strands <- strand(pqs_rs)
-n_g_rich <- mcols(pqs_rs)$nt
-n_bulge <- mcols(pqs_rs)$nb
-n_mismatch <- mcols(pqs_rs)$nm
-
-detach("package:pqsfinder", unload=TRUE)
-detach("package:Biostrings", unload=TRUE)
-detach("package:IRanges", unload=TRUE)
-gc()
 ```
 
 \~Define pqsfinder and you can follow results in output 
@@ -164,11 +144,10 @@ Gviz provides a powerful and flexible framework for visualizing genomic data, en
 First you should reach header info into your_seq.fasta file, header include genomic coordinate info from reference genome. Let's read it
 
 ```{r eval=FALSE}
-library(Gviz)
-library(BSgenome.Hsapiens.UCSC.hg38)
-library(biomaRt)
-library(rtracklayer)
-library(IRanges)
+invisible(library(Gviz))
+invisible(library(biomaRt))
+invisible(library(rtracklayer))
+invisible(library(IRanges))
 
 header <- ""
 
@@ -269,12 +248,6 @@ grid::grid.text(label = explaincom,
                 x = grid::unit(0.05, "npc"), y = grid::unit(1.2, "lines"), just = "left",
                 gp = grid::gpar(col = "slategray", fontsize = 9, fontface = "italic"))
 
-detach("package:Gviz", unload=TRUE)
-detach("package:BSgenome.Hsapiens.UCSC.hg38", unload=TRUE)
-detach("package:biomaRt", unload=TRUE)
-detach("package:rtracklayer", unload=TRUE)
-detach("package:IRanges", unload=TRUE)
-gc()
 ```
 \~In Gviz visualisation, AnnotationTrack represents the genetic element, DataTrack represents the scores and density, and GenomeAxisTrack represents the coordinate axis. The shape = "arrow" parameter indicates the strand orientation of the transcript, marking the (+) or (–) direction with an arrow.
 
@@ -335,9 +308,8 @@ message("All sequence PQS scores have been saved as 'results/pqs_scores.png'.")
 
 
 ```{r eval=FALSE}
-library(Gviz)
-library(BSgenome.Hsapiens.UCSC.hg38)
-library(IRanges)
+invisible(library(Gviz))
+invisible(library(IRanges))
 
 gvis_fname <- sprintf("results/Gviz_track(chr%s;%d-%d).png",
                       chr, floor(seq_start - extend), floor(seq_end + extend))
@@ -367,10 +339,6 @@ invisible(dev.off())
 msgtext <- paste0("All sequence PQS scores have been saved as '", gvis_fname,"'")
 message(msgtext)
 
-detach("package:Gviz", unload=TRUE)
-detach("package:BSgenome.Hsapiens.UCSC.hg38", unload=TRUE)
-detach("package:IRanges", unload=TRUE)
-gc()
 ```
 \~Export Gviz genome track (Before try, please run chunk 7)
 
@@ -384,8 +352,8 @@ You can export the test results to a file in CSV format using a dataframe elemen
     =6;ll2=4;ll3=1;CCCCCTCTAGTCCCAAACCTAAGCCCACACTCTGTCCCC
 
 ```{r}
-library(Biostrings)
-library(IRanges)
+invisible(library(Biostrings))
+invisible(library(IRanges))
 
 pqs_ranges <- IRanges(start=positions, width=widths)
 pqs_sequences <- extractAt(seq, pqs_ranges)
@@ -408,9 +376,6 @@ pqs_df <- data.frame(
 csv_path <- file.path("results", "pqs_results.csv")
 write.table(pqs_df, file = csv_path, col.names = TRUE, quote = FALSE)
 
-detach("package:Biostrings", unload=TRUE)
-detach("package:IRanges", unload=TRUE)
-gc()
 ```
 
 \~Recorded pqs_rs as CSV format, and all detected G4 sequence recorded a fasta file.
