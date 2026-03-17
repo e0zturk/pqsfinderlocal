@@ -9,6 +9,7 @@ This repository provides tools for identifying putative quadruplex sequences (PQ
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/e0zturk/pqsfinderlocal/main?urlpath=rstudio)
 
 **Build time:** The initial setup takes 25–30 minutes.
+
 **Session timeout:** If no activity occurs for an average of 10, the server shuts down.
 
 > **⚠️ IMPORTANT:** Bookmark or save this Binder link. You will need it to restart your session.
@@ -143,6 +144,7 @@ Bu depo, pqsfinder algoritması kullanarak genomik verilerde putative dörtlü d
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/e0zturk/pqsfinderlocal/main?urlpath=rstudio)
 
 **Oluşturma süresi:** İlk  kurulum 25-30 dakika sürmektedir.
+
 **Oturum zaman aşımı:** Ortalama 10  dakika boyunca işlem yapılmaması durumunda oturum sonlandırılır.
 
 > **⚠️ ÖNEMLİ:** Bu Binder bağlantısını yer imlerine ekleyin veya kaydedin. Oturumunuzu yeniden başlatmak için buna ihtiyacınız olabilir.
