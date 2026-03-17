@@ -12,7 +12,7 @@ Written with the instruct of [pqsfinder : User Guide](https://bioconductor.org/p
 
 * This file has been customised for use in a binder environment. Please skip chunks 1 and 2.
 
-* The installation process may take approximately 25-35 minutes for first time installation.
+* The installation process may take approximately 25-30 minutes for first time installation.
 
 ```{#r (close for binder)}
 if (!requireNamespace("renv", quietly = TRUE)) {
